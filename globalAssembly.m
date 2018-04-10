@@ -21,7 +21,7 @@ function K = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY)
         nodeIndices = zeros(1,8);
         nodeIndices(1:2:numel(nodeIndices)) = 2*Conn(e,:) - 1;
         nodeIndices(2:2:numel(nodeIndices)) = 2*Conn(e,:);
-        K0(nodeIndices,nodeIndices,e) = k(1:4,1:4,e);
+        K0(nodeIndices,nodeIndices,e) = k(:,:,e);
     end
     
     % Forming the stiffness matrix

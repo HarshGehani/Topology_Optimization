@@ -12,8 +12,8 @@ E_min = 1e-7;
 
 % Elemental densities
 %x = sym('x',[nX nY]);
-x = ones(nX,nY);
-E_i = E_0*ones(nX,nY) + x*(E_0 - E_min);
+x = ones(nY,nX);
+E_i = E_0*ones(nY,nX) + x*(E_0 - E_min);
 
 % Elemental stiffness matrix
 k = zeros(dofPerNode*nodesPerElement,dofPerNode*nodesPerElement,nElem);
@@ -63,9 +63,7 @@ K = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY);
 K(boundaryNodeIndices,:) = [];                      % Rows
 K(:,boundaryNodeIndices) = [];                      % Columns
 
-F(boundaryNodeIndices,:) = [];                      % Rows
-F(:,boundaryNodeIndices) = [];                      % Columns
+F(boundaryNodeIndices) = [];                      % Rows
+%F(:,boundaryNodeIndices) = [];                      % Columns
 
 u = K\F;                                            % Nodal Displacement vector
-
-
