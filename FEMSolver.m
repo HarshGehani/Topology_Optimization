@@ -1,7 +1,7 @@
 % FEM SOLVER
 
-length = 1; breadth = 0.0025;             % Dimensions of the beam
-nX = 6; nY = 2;                      % Number of cells in x and y-directions
+length = 1; breadth = 0.0025;           % Dimensions of the beam
+nX = 6; nY = 2;                         % Number of cells in x and y-directions
 dx = length/nX; dy = breadth/nY;        % Dimensions of each element
 nodesPerElement = 4;                    % Considering linear quadrilateral elementq
 dofPerNode = 2;
