@@ -1,13 +1,13 @@
 % FEM SOLVER
 
-length = 1; breadth = 0.25;             % Dimensions of the beam
-nX = 6; nY = 2;                      % Number of cells in x and y-directions
+length = 1; breadth = 0.025;             % Dimensions of the beam
+nX = 100; nY = 10;                      % Number of cells in x and y-directions
 dx = length/nX; dy = breadth/nY;        % Dimensions of each element
 nodesPerElement = 4;                    % Considering linear quadrilateral elementq
 dofPerNode = 2;
 nNodes = (nX + 1)*(nY + 1);
 nElem = nX*nY;                          % Total number of elements
-E_0 = 2e11;
+E_0 = 1;
 E_min = 1e-7;
 
 % Elemental densities
@@ -67,3 +67,5 @@ F(boundaryNodeIndices) = [];                      % Rows
 %F(:,boundaryNodeIndices) = [];                      % Columns
 
 u = K\F;                                            % Nodal Displacement vector
+
+viewMatrix(u);

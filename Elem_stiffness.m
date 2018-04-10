@@ -4,7 +4,7 @@ function [k0_i_final] = Elem_stiffness(x_i,dx, dy)
     
 % % Parameters
     p = 1;  %Penalty coefficient
-    E_0 = 2e11; %Isotropic material Modulus of elasticity (Steel)
+    E_0 = 1; %Isotropic material Modulus of elasticity (Steel)
     % Arbitrary min value of modulus for avoiding optimization algo breakdown
     E_min = 1e-7;   
     nu = 0.3; % Poisson ratio (Steel)

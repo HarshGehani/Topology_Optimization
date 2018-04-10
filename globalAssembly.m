@@ -28,7 +28,7 @@ function K = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY)
     i = 1; j = 1;
     for e = 1:nElem
         %K = (E_min + x(i,j)*(E_0 - E_min))*K0(:,:,e);
-        K = (E_i(i,j))*K0(:,:,e);
+        K = K + (E_i(i,j))*K0(:,:,e);
         j = j + 1;
         if j > nX
             j = 1;
