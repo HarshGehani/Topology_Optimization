@@ -20,7 +20,7 @@ function [k0_i_final] = Elem_stiffness(x_i, dx, dy)
             nu, (1 - nu), 0;
             0, 0, (1 - 2*nu)/2];
 
-    syms eta zeta-
+    syms eta zeta
 
     % Linear Quadilateral element
     N1 = 0.25*(1-zeta)*(1-eta);
