@@ -13,6 +13,7 @@ function [stiffnessMatrix] = integrateStiffness(equationMatrix)
     % iterate over each cell of elemental stiffness matrix:
     for i=1:m
         for j=1:n
+        
             fun = matlabFunction(equationMatrix(i,j));
             
             % check function for zero integral:
