@@ -1,4 +1,4 @@
-function [k0_i_final] = Elem_stiffness(dx, dy)
+function [k0_i_final] = Elem_stiffness(x_i,dx, dy)
 % % Function to determine element-wise stiffness matrix using coordinate 
 % % values of center of every element and the dimensions of the element
     
