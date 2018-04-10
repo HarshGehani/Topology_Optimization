@@ -20,6 +20,7 @@ k = zeros(dofPerNode*nodesPerElement,dofPerNode*nodesPerElement,nElem);
 
 % Global Load vector
 F = zeros(dofPerNode*nNodes,1);
+F(14) = -1000;
 
 % Setting up the boundary conditions (Indices of the rows and columns to be deleted from K and F)
 boundaryNodeIndices = zeros(1,2*(nY + 1));
@@ -47,7 +48,7 @@ i = 1; j = 1;
 for e = 1:nElem
     centerX = (j - 1)*dx + dx/2.0;
     centerY = (i - 1)*dy + dy/2.0;
-    k(:,:,e) = k(:,:,e) + Elem_stifness(centerX, centerY, dx, dy);
+    k(:,:,e) = k(:,:,e) + Elem_stiffness(x(i,j), dx, dy);
     j = j + 1;
     if j > nX
         j = 1;

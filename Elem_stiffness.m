@@ -28,8 +28,8 @@ function [k0_i_final] = Elem_stiffness(x_i,dx, dy)
     N3 = 0.25*(1+zeta)*(1+eta);
     N4 = 0.25*(1-zeta)*(1+eta);
     
-    grad_N1 = grad(N1); grad_N2 = grad(N2);
-    grad_N3 = grad(N3); grad_N4 = grad(N4);
+    grad_N1 = gradient(N1); grad_N2 = gradient(N2);
+    grad_N3 = gradient(N3); grad_N4 = gradient(N4);
 
     B = (1/(2*dx*dy))*[grad_N1(1),0,grad_N2(1),0,grad_N3(1),0,grad_N4(1),0;
         0,grad_N1(2),0,grad_N2(2),0,grad_N3(2),0,grad_N4(2);
