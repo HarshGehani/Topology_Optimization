@@ -20,6 +20,7 @@ function [stiffnessMatrix] = integrateStiffness(equationMatrix)
                 stiffnessMatrix(i,j) = integral2(fun,etaMin,etaMax,zetaMin,zetaMax);
             else
                 stiffnessMatrix(i,j) = 0;
+            end
         end
     end
     
