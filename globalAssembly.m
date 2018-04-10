@@ -14,7 +14,6 @@ function K = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY)
     K = zeros(N,N);                                  % Global stiffness matrix
     K0 = zeros(N,N,nElem);                           % Global version of the stiffness matrices for each element (3rd dimension corresponds to a particular element)
     
-
     
     % Forming the sparse global version of the elemental stiffness matrix
     for e = 1:nElem
