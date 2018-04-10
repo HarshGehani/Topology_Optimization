@@ -1,28 +1,39 @@
 function []=viewMatrix(densityMap)
     % function inputs a matrix(density structure) and views it as an image
     
-    % set density values between 0 & 1:
-    densityMap = 100*densityMap;
+    % check for 2D or 3D structure:
+    [~,~,c] = size(densityMap,3);
     
-    % resizing image:
-    [~,n] = size(densityMap);
-    if n < 100
-        densityMap2 = imresize(densityMap,100);
+    if c==1:
+    % view 2D structure:
     
-        % view resized image:
+        % set density values between 0 & 100:
+        densityMap = 100*densityMap;
+
+        % resizing image:
+        [~,n] = size(densityMap);
+        if n < 100
+            densityMap2 = imresize(densityMap,100);
+
+            % view resized image:
+            figure;
+            image(densityMap2);
+            colorbar;
+            title("Optimized structure: rescaled (x 100)");
+            ylabel('length');
+            xlabel('breadth');
+        end
+
+        % view original image:
         figure;
-        image(densityMap2);
+        image(densityMap);
         colorbar;
-        title("Optimized structure: rescaled (x 100)");
+        title("Optimized structure");
         ylabel('length');
         xlabel('breadth');
+        
+    else
+    % view 3D structure:
+        
     end
-    
-    % view original image:
-    figure;
-    image(densityMap);
-    colorbar;
-    title("Optimized structure");
-    ylabel('length');
-    xlabel('breadth');
 end
