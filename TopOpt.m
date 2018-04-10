@@ -1,0 +1,111 @@
+% FEM SOLVER
+function TopOpt
+volfrac = 0.3;
+
+length = 1; breadth = 0.0025;             % Dimensions of the beam
+nX = 6; nY = 2;                      % Number of cells in x and y-directions
+dx = length/nX; dy = breadth/nY;      % Dimensions of each element
+v = (dx*dy*ones(nY,nX));
+nodesPerElement = 4;                    % Considering linear quadrilateral elementq
+dofPerNode = 2;
+nNodes = (nX + 1)*(nY + 1);
+nElem = nX*nY;                          % Total number of elements
+E_0 = 1;
+E_min = 1e-7;
+nele = nX*nY;
+
+%x0 = volfrac*ones(nY,nX);
+x0 = ones(nY,nX);
+
+maxloop = 200;    % Maximum number of iterations
+tolx = 0.01;   
+
+f=@(x) FEMSolver(x);
+
+disp(f(x0));
+
+%A = -x0;
+%B = volfrac;
+A= [];
+B= [];
+Aeq = [];
+Beq = [];
+LB = zeros(size(x0));
+UB = ones(size(x0));
+
+options = optimoptions('fmincon','TolX',tolx, 'MaxIter',maxloop,'Display','iter','Algorithm','sqp');
+z = fmincon(f, x0, A, B, Aeq, Beq, LB, UB, @(x) nonlcon(x),options);
+
+disp (z);
+
+function f=FEMSolver(x)
+
+% Elemental densities
+%x = sym('x',[nX nY]);
+%x = ones(nY,nX);
+E_i = E_0*ones(nY,nX) + x*(E_0 - E_min);
+
+% Elemental stiffness matrix
+k = zeros(dofPerNode*nodesPerElement,dofPerNode*nodesPerElement,nElem);
+
+% Global Load vector
+F = zeros(dofPerNode*nNodes,1);
+F(14) = -1000;
+
+% Setting up the boundary conditions (Indices of the rows and columns to be deleted from K and F)
+boundaryNodeIndices = zeros(1,2*(nY + 1));
+
+% Forming the connectivity matrix
+Conn = zeros(nElem,nodesPerElement);
+i = 1; boundaryCount = 1;
+for e = 1:nElem
+    % Checking for boundary nodes
+    if mod(e,nX) == 1
+        boundaryNodeIndices(boundaryCount:boundaryCount + 1) = [2*i - 1,2*i];
+        boundaryNodeIndices(boundaryCount + 2:boundaryCount + 3) = [2*(i + nX + 1) - 1,2*(i + nX + 1)];
+        boundaryCount = boundaryCount + 4;
+    end
+    Conn(e,:) = [i,i + 1,i + nX + 2,i + nX + 1];
+    i = i + 1;
+    if i == nX + 1
+        i = i + 1;
+    end
+end
+boundaryNodeIndices = unique(boundaryNodeIndices);
+
+% Calculating the elemental stiffness matrices
+i = 1; j = 1;
+for e = 1:nElem
+    centerX = (j - 1)*dx + dx/2.0;
+    centerY = (i - 1)*dy + dy/2.0;
+    k(:,:,e) = k(:,:,e) + Elem_stiffness(x(i,j), dx, dy);
+    j = j + 1;
+    if j > nX
+        j = 1;
+        i = i + 1;
+    end
+end
+
+% Assembling the global stiffness matrix
+K = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY);
+
+% Removing the rows + columns that correspond to nDOFs = 0 (Boundary nodes)
+K(boundaryNodeIndices,:) = [];                      % Rows
+K(:,boundaryNodeIndices) = [];                      % Columns
+
+F(boundaryNodeIndices) = [];                      % Rows
+%F(:,boundaryNodeIndices) = [];                      % Columns
+
+u = K\F;                                            % Nodal Displacement vector
+
+f=F'*u;
+%viewMatrix(u);
+end
+
+    function [c, ceq] = nonlcon(x)
+        
+        %c = sum((x'*v)) - volfrac*nX*nX;
+        c = sum(sum((dy*dx)*(x))) - volfrac*length*breadth;
+        ceq = [];
+    end
+end
