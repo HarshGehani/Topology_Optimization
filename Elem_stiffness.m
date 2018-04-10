@@ -3,15 +3,15 @@ function [k0_i_final] = Elem_stiffness(x_i, dx, dy)
 % % values of center of every element and the dimensions of the element
     
 % % Parameters
-    p = 1;  %Penalty coefficient
-    E_0 = 1; %Isotropic material Modulus of elasticity (Steel)
-%     % Arbitrary min value of modulus for avoiding optimization algo breakdown
+    p = 1;      %Penalty coefficient
+    E_0 = 1;    %Isotropic material Modulus of elasticity (Steel)
+% % Arbitrary min value of modulus for avoiding optimization algo breakdown
     E_min = 1e-7;   
-    nu = 0.3; % Poisson ratio (Steel)
+    nu = 0.3;   % Poisson ratio (Steel)
 
     % syms x_i
     % Heuristic relation between (relative) element density, x_i, and element 
-    % Young's™ modulus, E_i for modified SIMP approach
+    % Young'sâ„¢ modulus, E_i for modified SIMP approach
     E_i = E_min + ((x_i)^p)*(E_0 - E_min);      % x_i is in range (0,1)
 
     % 2D Constitutive matrix
