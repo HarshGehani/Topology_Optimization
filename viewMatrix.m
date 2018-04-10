@@ -2,9 +2,9 @@ function []=viewMatrix(densityMap)
     % function inputs a matrix(density structure) and views it as an image
     
     % check for 2D or 3D structure:
-    c = size(densityMap,3);
+    d3Size = size(densityMap,3);
     
-    if c==1
+    if d3Size==1
     % view 2D structure:
     
         % set density values between 0 & 100:
