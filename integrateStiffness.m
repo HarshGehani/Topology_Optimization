@@ -1,8 +1,14 @@
-function [stiffnessMatrix] = integrateStiffness(equationMatrix)
+function [stiffnessMatrix] = integrateStiffness(equationMatrix, nVariable)
     % function integrates over the elemental stiffness matrix
     % and returns its numerical value
     
-    [m,n,o] = size(equationMatrix);
+    % Input:
+    %   equationMatrix - Matrix with equations of stiffness element
+    %   nVariable - number of variables in the equation
+    % Ouput:
+    %   stiffnessMatrix - matrix with stiffness values for each element
+    
+    [m,n] = size(equationMatrix);
     
     % integration limits:
     eta1Min = -1;
@@ -13,7 +19,7 @@ function [stiffnessMatrix] = integrateStiffness(equationMatrix)
     eta3Max = 1;
     
     % check for 2D or 3D structure:
-    if o==1
+    if nVariable==2
     % 2D structure iteration over each cell:
         for i=1:m
             for j=1:n
@@ -34,18 +40,15 @@ function [stiffnessMatrix] = integrateStiffness(equationMatrix)
     % 3D structure iteration over each cell:
         for i=1:m
             for j=1:n
-                for k=1:o
                 
-                    % create matlabFunction for equation evaluation:
-                    fun = matlabFunction(equationMatrix(i,j,k));
-                    
-                    % check function for zero integral:
-                    if ~isequal(func2str(fun),func2str(@()0.0));
-                        stiffnessMatrix(i,j,k) = integral3(fun,eta1Min,eta1Max,eta2Min,eta2Max,eta3Min,eta3Max);
-                    else
-                        stiffnessMatrix(i,j,k) = 0;
-                    end
-                    
+                % create matlabFunction for equation evaluation:
+                fun = matlabFunction(equationMatrix(i,j));
+
+                % check function for zero integral:
+                if ~isequal(func2str(fun),func2str(@()0.0));
+                    stiffnessMatrix(i,j) = integral3(fun,eta1Min,eta1Max,eta2Min,eta2Max,eta3Min,eta3Max);
+                else
+                    stiffnessMatrix(i,j) = 0;
                 end
             end
         end      
