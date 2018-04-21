@@ -20,13 +20,13 @@ function [k0_i_final] = Elem_stiffness(x_i, dx, dy)
             nu, (1 - nu), 0;
             0, 0, (1 - 2*nu)/2];
 
-    syms eta zeta
+    syms eta1 eta2
 
     % Linear Quadilateral element
-    N1 = 0.25*(1-zeta)*(1-eta);
-    N2 = 0.25*(1+zeta)*(1-eta);
-    N3 = 0.25*(1+zeta)*(1+eta);
-    N4 = 0.25*(1-zeta)*(1+eta);
+    N1 = 0.25*(1-eta1)*(1-eta2);
+    N2 = 0.25*(1+eta1)*(1-eta2);
+    N3 = 0.25*(1+eta1)*(1+eta2);
+    N4 = 0.25*(1-eta1)*(1+eta2);
     
     grad_N1 = gradient(N1); grad_N2 = gradient(N2);
     grad_N3 = gradient(N3); grad_N4 = gradient(N4);

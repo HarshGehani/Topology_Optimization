@@ -75,10 +75,12 @@ boundaryNodeIndices = unique(boundaryNodeIndices);
 
 % Calculating the elemental stiffness matrices
 i = 1; j = 1;
+k_element = Elem_stiffness(x(i,j), dx, dy);             % Elemental stiffness matrix
 for e = 1:nElem
     centerX = (j - 1)*dx + dx/2.0;
     centerY = (i - 1)*dy + dy/2.0;
-    k(:,:,e) = k(:,:,e) + Elem_stiffness(x(i,j), dx, dy);
+   % k(:,:,e) = k(:,:,e) + Elem_stiffness(x(i,j), dx, dy);
+    k(:,:,e) = k(:,:,e) + k_element;
     j = j + 1;
     if j > nX
         j = 1;

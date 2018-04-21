@@ -5,10 +5,10 @@ function [stiffnessMatrix] = integrateStiffness(equationMatrix)
     [m,n] = size(equationMatrix);
     
     % integration limits:
-    etaMin = -1;
-    etaMax = 1;
-    zetaMin = -1;
-    zetaMax = 1;
+    eta1Min = -1;
+    eta1Max = 1;
+    eta2Min = -1;
+    eta2Max = 1;
     
     % iterate over each cell of elemental stiffness matrix:
     for i=1:m
@@ -18,7 +18,7 @@ function [stiffnessMatrix] = integrateStiffness(equationMatrix)
             
             % check function for zero integral:
             if ~isequal(func2str(fun),func2str(@()0.0))
-                stiffnessMatrix(i,j) = integral2(fun,etaMin,etaMax,zetaMin,zetaMax);
+                stiffnessMatrix(i,j) = integral2(fun,eta2Min,eta2Max,eta1Min,eta1Max);
             else
                 stiffnessMatrix(i,j) = 0;
             end
