@@ -118,8 +118,9 @@ function f=FEMSolver(x)
 
     % Calculating the elemental stiffness matrices
     i = 1; j = 1;k_z = 1;
-    % k_element = Elem_stiffness(x(i,j), dx, dy);               % Elemental stiffness matrix
-    k_element = Elem_stiffness_3D(dx, dy,dz);                   % Elemental stiffness matrix
+    % k_element = Elem_stiffness(x(i,j), dx, dy);                 % Elemental stiffness matrix
+    % k_element = Elem_stiffness_3D(dx, dy,dz);                   % Elemental stiffness matrix
+    k_element = elem_stiffness_check;                           % Elemental stiffness matrix from SOTA formula
     for e = 1:nElem
         k(:,:,e) = k(:,:,e) + k_element;
         j = j + 1;
