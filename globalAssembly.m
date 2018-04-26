@@ -7,7 +7,7 @@
 % 'nX' & 'nY' are the number of cells in the x and y-directions
 
 
-function K = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY)
+function K = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY,nZ)
     nNodes = (nX + 1)*(nY + 1)*(nZ + 1);
     nElem = nX*nY*nZ;
     N = nNodes*dofPerNode;                           % Total DOFs of the system
@@ -17,12 +17,13 @@ function K = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY)
     
     % Forming the sparse global version of the elemental stiffness matrix
     for e = 1:nElem
+      % 2D
 %         nodeIndices = zeros(1,8);                   % 2D
-        nodeIndices = zeros(1,24);                   % 3D
 %         nodeIndices(1:2:numel(nodeIndices)) = 2*Conn(e,:) - 1;
 %         nodeIndices(2:2:numel(nodeIndices)) = 2*Conn(e,:);
 
         % 3D
+        nodeIndices = zeros(1,24);                   % 3D
         nodeIndices(1:3:numel(nodeIndices)) = 3*Conn(e,:) - 2;
         nodeIndices(2:3:numel(nodeIndices)) = 3*Conn(e,:) - 1;
         nodeIndices(3:3:numel(nodeIndices)) = 3*Conn(e,:);
