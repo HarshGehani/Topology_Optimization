@@ -8,7 +8,10 @@
 
 
 function K = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY,nZ)
-    nNodes = (nX + 1)*(nY + 1)*(nZ + 1);
+    nNodes = (nX + 1)*(nY + 1);
+    if nZ ~= 1
+        nNodes = nNodes*(nZ + 1);
+    end
     nElem = nX*nY*nZ;
     N = nNodes*dofPerNode;                           % Total DOFs of the system
     K = zeros(N,N);                                  % Global stiffness matrix
@@ -17,11 +20,12 @@ function K = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY,nZ)
     
     % Forming the sparse global version of the elemental stiffness matrix
     for e = 1:nElem
-      % 2D
+% %       2D
 %         nodeIndices = zeros(1,8);                   % 2D
 %         nodeIndices(1:2:numel(nodeIndices)) = 2*Conn(e,:) - 1;
 %         nodeIndices(2:2:numel(nodeIndices)) = 2*Conn(e,:);
-
+%         K0(nodeIndices,nodeIndices,e) = k(:,:,e);
+        
         % 3D
         nodeIndices = zeros(1,24);                   % 3D
         nodeIndices(1:3:numel(nodeIndices)) = 3*Conn(e,:) - 2;

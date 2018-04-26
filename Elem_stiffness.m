@@ -19,8 +19,10 @@ function [k0_i_final] = Elem_stiffness(x_i, dx, dy)
     C0_i = coeff*[(1 - nu), nu, 0;
             nu, (1 - nu), 0;
             0, 0, (1 - 2*nu)/2];
-
-    syms eta1 eta2
+    
+    eig_C = eig(C0_i);
+    disp(eig_C);
+    syms eta1 eta2 real
 
     % Linear Quadilateral element
     N1 = 0.25*(1-eta1)*(1-eta2);
@@ -38,7 +40,8 @@ function [k0_i_final] = Elem_stiffness(x_i, dx, dy)
     
     % Element stiffness matrix
     unsolved_k0_i = (B' * C0_i * B);
-    k0_i = integrateStiffness(unsolved_k0_i);
+    temp = double(subs(unsolved_k0_i,{eta1, eta2},[-1,-1]));
+    k0_i = integrateStiffness(unsolved_k0_i,2);
     k0_i_final = E_i * k0_i;
 %     k0_i_final = k0_i;
 end

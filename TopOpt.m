@@ -3,7 +3,7 @@ function TopOpt
 volfrac = 0.8;
 
 length = 1; breadth = 0.025;height = 1;             % Dimensions of the beam
-nX = 6; nY = 2; nZ = 1;                      % Number of cells in x and y-directions
+nX = 6; nY = 3; nZ = 2;                      % Number of cells in x and y-directions
 dx = length/nX; dy = breadth/nY;      % Dimensions of each element
 dz = height/nZ;
 v = (dx*dy*ones(nY,nX));
@@ -11,7 +11,8 @@ v = (dx*dy*ones(nY,nX));
 nodesPerElement = 8;
 dofPerNode = 3;
 % dofPerNode = 2;
-nNodes = (nX + 1)*(nY + 1)*(nZ + 1);
+nNodes = (nX + 1)*(nY + 1)*(nZ + 1);     % 3D
+% nNodes = (nX + 1)*(nY + 1);                 % 2D
 nElem = nX*nY*nZ;                          % Total number of elements
 
 element_state = ones(nElem);            % Whether or not the element has been removed
@@ -48,53 +49,53 @@ disp(f(x0));
 
 % FEM Solver (Objective function)
 function f=FEMSolver(x)
-% Elemental densities
-%x = sym('x',[nX nY]);
-%x = ones(nY,nX);
-E_i = E_0*ones(nY,nX,nZ) + x*(E_0 - E_min);
+    % Elemental densities
+    %x = sym('x',[nX nY]);
+    %x = ones(nY,nX);
+    E_i = E_0*ones(nY,nX,nZ) + x*(E_0 - E_min);
 
-% Elemental stiffness matrix
-k = zeros(dofPerNode*nodesPerElement,dofPerNode*nodesPerElement,nElem);
+    % Elemental stiffness matrix
+    k = zeros(dofPerNode*nodesPerElement,dofPerNode*nodesPerElement,nElem);
 
-% Global Load vector
-F = zeros(dofPerNode*nNodes,1);
-% F(2*(nX + 1)) = -1000;                            % 2D (load in the -Y direction)
-for i = 1:nY + 1
-    F(3*i*(nX + 1)) = -1000;                      % 3D (load in the -Z direction, along the bottom edge)
-end
-F_reshaped = reshape(F',[],3);
-forceIndices = find(F ~= 0);
-% Setting up the boundary conditions (Indices of the rows and columns to be deleted from K and F)
-boundaryNodeIndices = zeros(1,2*(nY + 1)*(nZ + 1));                   % 3D
-% boundaryNodeIndices = zeros(1,2*(nY + 1));                          % 2D
-
-% Forming the connectivity matrix (3D)
-Conn = zeros(nElem,nodesPerElement);
-i = 1; boundaryCount = 1; z_idx = 0;                % z_idx is basically the z-coordinate
-nNodes_xy = (nX + 1)*(nY + 1);
-for e = 1:nElem
-    lowerFace = [i + z_idx*nNodes_xy,i + 1 + z_idx*nNodes_xy,i + nX + 2 + z_idx*nNodes_xy,i + nX + 1 + z_idx*nNodes_xy];
-    upperFace = [i + (z_idx +  1)*nNodes_xy,i + 1 + (z_idx +  1)*nNodes_xy, i + nX + 2 + (z_idx +  1)*nNodes_xy, i + nX + 1 + (z_idx +  1)*nNodes_xy];
-    Conn(e,:) = [lowerFace,upperFace];
-    
-    % Checking for boundary nodes
-    if mod(e,nX) == 1
-        boundaryNodeIndices(boundaryCount:boundaryCount + 2) = [3*lowerFace(1) - 2,3*lowerFace(1) - 1,3*lowerFace(1)];
-        boundaryNodeIndices(boundaryCount + 3:boundaryCount + 5) = [3*lowerFace(4) - 2,3*lowerFace(4) - 1,3*lowerFace(4)];
-        boundaryNodeIndices(boundaryCount + 6:boundaryCount + 8) = [3*upperFace(1) - 2,3*upperFace(1) - 1,3*upperFace(1)];
-        boundaryNodeIndices(boundaryCount + 9:boundaryCount + 11) = [3*upperFace(4) - 2,3*upperFace(4) - 1,3*upperFace(4)];
-        boundaryCount = boundaryCount + 12;
+    % Global Load vector
+    F = zeros(dofPerNode*nNodes,1);
+%     F(2*(nX + 1)) = -1000;                            % 2D (load in the -Y direction)
+% 3D
+    for i = 1:nY + 1
+        F(3*i*(nX + 1)) = -1000;                      % 3D (load in the -Z direction, along the bottom edge)
     end
 
-    
-    i = i + 1;
-    if i == nNodes_xy
-       z_idx = z_idx + 1;
-       i = 1;
-    end
-    if mod(i,nX + 1) == 0
+    % Setting up the boundary conditions (Indices of the rows and columns to be deleted from K and F)
+    boundaryNodeIndices = zeros(1,2*(nY + 1)*(nZ + 1));                   % 3D
+%      boundaryNodeIndices = zeros(1,2*(nY + 1));                          % 2D
+
+    % Forming the connectivity matrix (3D)
+    Conn = zeros(nElem,nodesPerElement);
+    i = 1; boundaryCount = 1; z_idx = 0;                % z_idx is basically the z-coordinate
+    nNodes_xy = (nX + 1)*(nY + 1);
+    for e = 1:nElem
+        lowerFace = [i + z_idx*nNodes_xy,i + 1 + z_idx*nNodes_xy,i + nX + 2 + z_idx*nNodes_xy,i + nX + 1 + z_idx*nNodes_xy];
+        upperFace = [i + (z_idx +  1)*nNodes_xy,i + 1 + (z_idx +  1)*nNodes_xy, i + nX + 2 + (z_idx +  1)*nNodes_xy, i + nX + 1 + (z_idx +  1)*nNodes_xy];
+        Conn(e,:) = [lowerFace,upperFace];
+
+        % Checking for boundary nodes
+        if mod(e,nX) == 1
+            boundaryNodeIndices(boundaryCount:boundaryCount + 2) = [3*lowerFace(1) - 2,3*lowerFace(1) - 1,3*lowerFace(1)];
+            boundaryNodeIndices(boundaryCount + 3:boundaryCount + 5) = [3*lowerFace(4) - 2,3*lowerFace(4) - 1,3*lowerFace(4)];
+            boundaryNodeIndices(boundaryCount + 6:boundaryCount + 8) = [3*upperFace(1) - 2,3*upperFace(1) - 1,3*upperFace(1)];
+            boundaryNodeIndices(boundaryCount + 9:boundaryCount + 11) = [3*upperFace(4) - 2,3*upperFace(4) - 1,3*upperFace(4)];
+            boundaryCount = boundaryCount + 12;
+        end
+
+
         i = i + 1;
-    end
+        if i == nNodes_xy
+           z_idx = z_idx + 1;
+           i = 1;
+        end
+        if mod(i,nX + 1) == 0
+            i = i + 1;
+        end
 end
 boundaryNodeIndices = unique(boundaryNodeIndices);
 
@@ -149,11 +150,17 @@ indices(boundaryNodeIndices) = [];
 K(boundaryNodeIndices,:) = [];                      % Rows
 K(:,boundaryNodeIndices) = [];                      % Columns
 
+
 F_calc = F;
 F_calc(boundaryNodeIndices) = [];                      % Rows
 %F(:,boundaryNodeIndices) = [];                      % Columns
 
-u = K\F_calc;                                            % Nodal Displacement vector
+% Sparse TEST
+sparse_K = sparse(K);
+sparse_Fcalc = sparse(F_calc);
+
+% u = K\F_calc;                                            % Nodal Displacement vector
+u = sparse_K\F_calc;
 % u_x = reshape(u(1:2:end),2,6);
 % u_y = reshape(u(2:2:end),2,6);
 
