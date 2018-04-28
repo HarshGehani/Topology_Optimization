@@ -1,10 +1,15 @@
 % FEM SOLVER
-volfrac = 0.8;
-length = 1; breadth = 0.025;height = 1;             % Dimensions of the beam
-nX = 6; nY = 2; nZ = 1;               % No. of cells in x,y-directions
+function TopOpt
+volfrac = 0.3;
+% length = 1; breadth = 0.25;height = 0.25;             % Dimensions of the beam
+nX = 30; nY = 10; nZ = 2;               % No. of cells in x,y-directions
 
-dx = length/nX; dy = breadth/nY;      % Dimensions of each element
-dz = height/nZ;
+% dx = length/nX; dy = breadth/nY;      % Dimensions of each element
+% dz = height/nZ;
+dx = 1; dy = 1; dz = 1; 
+length = nX*dx; breadth = nY*dy;
+height = nZ*dz;
+
 if nZ == 1
     nodesPerElement = 4;	% Considering linear quadrilateral elements
     dofPerNode = 2;
@@ -29,6 +34,8 @@ tolx = 0.01;
 f=@(x) FEMSolver(x);
 disp(f(x0));
 
+
+% OPTIMIZATION
 % %A = -x0;
 % %B = volfrac;
 A= [];
@@ -38,7 +45,7 @@ Beq = [];
 LB = zeros(size(x0));
 UB = ones(size(x0));
 
-options = optimoptions('fmincon','TolX',tolx, 'MaxIter',maxloop,'Display','iter','Algorithm','sqp');
+options = optimoptions(@fmincon,'Algorithm','sqp','TolX',tolx, 'MaxIter',maxloop,'Display','iter');
 z = fmincon(f, x0, A, B, Aeq, Beq, LB, UB, @(x) nonlcon(x),options);
 disp (z);
 
@@ -61,7 +68,7 @@ function f=FEMSolver(x)
         boundaryNodeIndices = zeros(1,2*(nY + 1));        % 2D
     else
         for i = 1:nY + 1
-            F(3*i*(nX + 1)) = -1000;                      % 3D (load in the -Z direction, along the bottom edge)
+            F(3*i*(nX + 1)) = -1;                      % 3D (load in the -Z direction, along the bottom edge)
         end
         % Setting up the boundary conditions (Indices of the rows and columns to be deleted from K and F)
         boundaryNodeIndices = zeros(1,2*(nY + 1)*(nZ + 1)); % 3D
@@ -69,35 +76,36 @@ function f=FEMSolver(x)
 %     F_reshaped = reshape(F',[],3);
 %     forceIndices = find(F ~= 0);
     
-    % Forming the connectivity matrix (3D)
-%     Conn = zeros(nElem,nodesPerElement);
-%     i = 1; boundaryCount = 1; z_idx = 0;                % z_idx is basically the z-coordinate
-%     nNodes_xy = (nX + 1)*(nY + 1);
-%     for e = 1:nElem
-%         lowerFace = [i + z_idx*nNodes_xy,i + 1 + z_idx*nNodes_xy,i + nX + 2 + z_idx*nNodes_xy,i + nX + 1 + z_idx*nNodes_xy];
-%         upperFace = [i + (z_idx +  1)*nNodes_xy,i + 1 + (z_idx +  1)*nNodes_xy, i + nX + 2 + (z_idx +  1)*nNodes_xy, i + nX + 1 + (z_idx +  1)*nNodes_xy];
-%         Conn(e,:) = [lowerFace,upperFace];
-% 
-%         % Checking for boundary nodes
-%         if mod(e,nX) == 1
-%             boundaryNodeIndices(boundaryCount:boundaryCount + 2) = [3*lowerFace(1) - 2,3*lowerFace(1) - 1,3*lowerFace(1)];
-%             boundaryNodeIndices(boundaryCount + 3:boundaryCount + 5) = [3*lowerFace(4) - 2,3*lowerFace(4) - 1,3*lowerFace(4)];
-%             boundaryNodeIndices(boundaryCount + 6:boundaryCount + 8) = [3*upperFace(1) - 2,3*upperFace(1) - 1,3*upperFace(1)];
-%             boundaryNodeIndices(boundaryCount + 9:boundaryCount + 11) = [3*upperFace(4) - 2,3*upperFace(4) - 1,3*upperFace(4)];
-%             boundaryCount = boundaryCount + 12;
-%         end
-% 
-%         i = i + 1;
-%         if i == nNodes_xy
-%            z_idx = z_idx + 1;
-%            i = 1;
-%         end
-%         if mod(i,nX + 1) == 0
-%             i = i + 1;
-%         end
-%     end
-%     boundaryNodeIndices = unique(boundaryNodeIndices);
+if nZ ~= 1
+%     Forming the connectivity matrix (3D)
+    Conn = zeros(nElem,nodesPerElement);
+    i = 1; boundaryCount = 1; z_idx = 0;                % z_idx is basically the z-coordinate
+    nNodes_xy = (nX + 1)*(nY + 1);
+    for e = 1:nElem
+        lowerFace = [i + z_idx*nNodes_xy,i + 1 + z_idx*nNodes_xy,i + nX + 2 + z_idx*nNodes_xy,i + nX + 1 + z_idx*nNodes_xy];
+        upperFace = [i + (z_idx +  1)*nNodes_xy,i + 1 + (z_idx +  1)*nNodes_xy, i + nX + 2 + (z_idx +  1)*nNodes_xy, i + nX + 1 + (z_idx +  1)*nNodes_xy];
+        Conn(e,:) = [lowerFace,upperFace];
 
+        % Checking for boundary nodes
+        if mod(e,nX) == 1
+            boundaryNodeIndices(boundaryCount:boundaryCount + 2) = [3*lowerFace(1) - 2,3*lowerFace(1) - 1,3*lowerFace(1)];
+            boundaryNodeIndices(boundaryCount + 3:boundaryCount + 5) = [3*lowerFace(4) - 2,3*lowerFace(4) - 1,3*lowerFace(4)];
+            boundaryNodeIndices(boundaryCount + 6:boundaryCount + 8) = [3*upperFace(1) - 2,3*upperFace(1) - 1,3*upperFace(1)];
+            boundaryNodeIndices(boundaryCount + 9:boundaryCount + 11) = [3*upperFace(4) - 2,3*upperFace(4) - 1,3*upperFace(4)];
+            boundaryCount = boundaryCount + 12;
+        end
+
+        i = i + 1;
+        if i == nNodes_xy
+           z_idx = z_idx + 1;
+           i = 1;
+        end
+        if mod(i,nX + 1) == 0
+            i = i + 1;
+        end
+    end
+    boundaryNodeIndices = unique(boundaryNodeIndices);
+else
     % Forming the connectivity matrix (2D)
     Conn = zeros(nElem,nodesPerElement);
     i = 1; boundaryCount = 1;
@@ -115,12 +123,15 @@ function f=FEMSolver(x)
         end
     end
     boundaryNodeIndices = unique(boundaryNodeIndices);
-
+end    
     % Calculating the elemental stiffness matrices
     i = 1; j = 1;k_z = 1;
-    % k_element = Elem_stiffness(x(i,j), dx, dy);                 % Elemental stiffness matrix
-    % k_element = Elem_stiffness_3D(dx, dy,dz);                   % Elemental stiffness matrix
-    k_element = elem_stiffness_check;                           % Elemental stiffness matrix from SOTA formula
+    if nZ == 1
+        k_element = Elem_stiffness(x(i,j), dx, dy);                 % Elemental stiffness matrix
+    else
+        k_element = Elem_stiffness_3D(dx, dy,dz);                   % Elemental stiffness matrix
+    end
+%     k_element = elem_stiffness_check();                           % Elemental stiffness matrix from SOTA formula
     for e = 1:nElem
         k(:,:,e) = k(:,:,e) + k_element;
         j = j + 1;
@@ -136,6 +147,7 @@ function f=FEMSolver(x)
 
     % Assembling the global stiffness matrix
     K = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY,nZ);
+    K = 0.5*(K + K');
 %     temp_s = k(:,:,1);
     indices = 1:dofPerNode*nNodes;                  % Indices of all the nodes
     indices(boundaryNodeIndices) = [];
@@ -147,6 +159,7 @@ function f=FEMSolver(x)
     F_calc = F;
     F_calc(boundaryNodeIndices) = [];                   % Rows
     %F(:,boundaryNodeIndices) = [];                     % Columns
+    
     
     u = K\F_calc;                                            % Nodal Displacement vector
     % u_x = reshape(u(1:2:end),2,6);
@@ -166,6 +179,7 @@ end
 function [c, ceq] = nonlcon(x)
         
         %c = sum((x'*v)) - volfrac*nX*nX;
-        c = sum(sum((dy*dx)*(x))) - volfrac*length*breadth;
+        c = sum(sum((dy*dx*dz)*(x))) - volfrac*length*breadth*height;
         ceq = [];
+end
 end

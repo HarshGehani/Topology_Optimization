@@ -1,3 +1,4 @@
+function [K] = elem_stiffness_check()
 nu = 0.3;
 
 k1 = -(6*nu - 4)/9;     k2 = 1/12;      k3 = -1/9;
@@ -49,8 +50,8 @@ K6_mat =[k14,k11,k7,k13,k10,k12;
     k12,k2,k9,k11,k7,k14];
 
 coeff = 1/((1+nu)*(1-2*nu));
-K = [K1_mat,K2_mat,K3_mat,K4_mat;
+K = coeff*[K1_mat,K2_mat,K3_mat,K4_mat;
     K2_mat',K5_mat,K6_mat,K4_mat';
     K3_mat',K6_mat,K5_mat',K2_mat';
     K4_mat,K3_mat,K2_mat,K1_mat'];
-
+end

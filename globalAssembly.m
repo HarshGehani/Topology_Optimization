@@ -14,31 +14,52 @@ function K = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY,nZ)
     end
     nElem = nX*nY*nZ;
     N = nNodes*dofPerNode;                           % Total DOFs of the system
-    K = zeros(N,N);                                  % Global stiffness matrix
-    K0 = zeros(N,N,nElem);                           % Global version of the stiffness matrices for each element (3rd dimension corresponds to a particular element)
+%     K = zeros(N,N);                                  % Global stiffness matrix
+    K = sparse(N,N);
+    K0 = cell(1,nElem);                             % Cell array; Each cell is an element to store sparse stiffness matrix
     
+%     K0 = zeros(N,N,nElem);                           % Global version of the stiffness matrices for each element (3rd dimension corresponds to a particular element)
+   
+%     % Using sparse
+%     K0 = sparse(K0);
+%     K = sparse(K);
     
     % Forming the sparse global version of the elemental stiffness matrix
+    element = struct();
     for e = 1:nElem
-% %       2D
-%         nodeIndices = zeros(1,8);                   % 2D
-%         nodeIndices(1:2:numel(nodeIndices)) = 2*Conn(e,:) - 1;
-%         nodeIndices(2:2:numel(nodeIndices)) = 2*Conn(e,:);
-%         K0(nodeIndices,nodeIndices,e) = k(:,:,e);
-        
-        % 3D
-        nodeIndices = zeros(1,24);                   % 3D
-        nodeIndices(1:3:numel(nodeIndices)) = 3*Conn(e,:) - 2;
-        nodeIndices(2:3:numel(nodeIndices)) = 3*Conn(e,:) - 1;
-        nodeIndices(3:3:numel(nodeIndices)) = 3*Conn(e,:);
-        K0(nodeIndices,nodeIndices,e) = k(:,:,e);
+        if nZ == 1        
+    %       2D
+            nodeIndices = zeros(1,8);                   % 2D
+            nodeIndices(1:2:numel(nodeIndices)) = 2*Conn(e,:) - 1;
+            nodeIndices(2:2:numel(nodeIndices)) = 2*Conn(e,:);
+%             K0(nodeIndices,nodeIndices,e) = k(:,:,e);
+
+            % Sparse Matrix
+            elementStiff = sparse(N,N);
+            elementStiff(nodeIndices,nodeIndices) = k(:,:,e);
+            element(e).stiffness = elementStiff;
+        else    
+            % 3D
+            nodeIndices = zeros(1,24);                   % 3D
+            nodeIndices(1:3:numel(nodeIndices)) = 3*Conn(e,:) - 2;
+            nodeIndices(2:3:numel(nodeIndices)) = 3*Conn(e,:) - 1;
+            nodeIndices(3:3:numel(nodeIndices)) = 3*Conn(e,:);
+%             K0(nodeIndices,nodeIndices,e) = k(:,:,e);
+            
+
+            % Sparse Matrix
+            elementStiff = sparse(N,N);
+            elementStiff(nodeIndices,nodeIndices) = k(:,:,e);
+            element(e).stiffness = elementStiff;
+        end
     end
     
     % Forming the stiffness matrix
     i = 1; j = 1;k = 1;
     for e = 1:nElem
-        %K = (E_min + x(i,j)*(E_0 - E_min))*K0(:,:,e);
-        K = K + (E_i(i,j,k))*K0(:,:,e);
+    
+%         K = K + (E_i(i,j,k))*K0(:,:,e);
+        K = K + (E_i(i,j,k))*element(e).stiffness;
         j = j + 1;
         if j > nX
             j = 1;
