@@ -1,8 +1,10 @@
 % FEM SOLVER
-function TopOpt
-volfrac = 0.3;
+function z=TopOpt()
+volfrac = 0.6;
+p=3;
+R=3;
 % length = 1; breadth = 0.25;height = 0.25;             % Dimensions of the beam
-nX = 30; nY = 10; nZ = 2;               % No. of cells in x,y-directions
+nX = 10; nY = 2; nZ = 1;               % No. of cells in x,y-directions
 
 % dx = length/nX; dy = breadth/nY;      % Dimensions of each element
 % dz = height/nZ;
@@ -25,11 +27,14 @@ nElem = nX*nY*nZ;                          % Total number of elements
 E_0 = 1;
 E_min = 1e-7;
 
-%x0 = volfrac*ones(nY,nX);
-x0 = ones(nY,nX,nZ);
+%x0 = volfrac*ones(nY*nX*nZ,1);
+%x0 = ones(nY*nX*nZ,1);
+x0 = volfrac*ones(nY,nX,nZ);
+
+%x0 = ones(nY*nX*nZ);
 
 maxloop = 200;    % Maximum number of iterations
-tolx = 0.01;   
+tolx = 0.00001;   
 
 f=@(x) FEMSolver(x);
 disp(f(x0));
@@ -45,25 +50,31 @@ Beq = [];
 LB = zeros(size(x0));
 UB = ones(size(x0));
 
-options = optimoptions(@fmincon,'Algorithm','sqp','TolX',tolx, 'MaxIter',maxloop,'Display','iter');
-z = fmincon(f, x0, A, B, Aeq, Beq, LB, UB, @(x) nonlcon(x),options);
-disp (z);
+%options = optimoptions(@fmincon,'Algorithm','interior-point','GradObj','on','GradConstr','on','TolX',tolx, 'MaxIter',maxloop,'Display','iter');
+
+options = optimoptions(@fmincon,'Algorithm','interior-point','GradObj','on','GradConstr','on','MaxIter',maxloop,'Display','iter');
+
+z = fmincon(@FEMSolver, x0, A, B, Aeq, Beq, LB, UB, @nonlcon,options);
+%disp (z);
 
 
 % FEM Solver (Objective function)
-function f=FEMSolver(x)
+function [f,gradf]=FEMSolver(x)
     % Elemental densities
     %x = sym('x',[nX nY]);
     %x = ones(nY,nX);
-    E_i = E_0*ones(nY,nX,nZ) + x*(E_0 - E_min);
+    %E_i = E_0*ones(nY*nX*nZ,1) + (x.^p)*(E_0 - E_min);
+    xphys = density_filter(x,R);
+    %E_i = E_0*ones(nY,nX,nZ) + (x.^p)*(E_0 - E_min);
+    E_i = E_0*ones(nY,nX,nZ) + (xphys.^p)*(E_0 - E_min);
 
     % Elemental stiffness matrix
     k = zeros(dofPerNode*nodesPerElement,dofPerNode*nodesPerElement,nElem);
 
     % Global Load vector
     F = zeros(dofPerNode*nNodes,1);
-    if nZ == 1
-        F(2*(nX + 1)) = -1000;                            % 2D (load in the -Y direction)
+    if nZ == 1        
+        F(2*(nX + 1)) = -1;                            % 2D (load in the -Y direction)        
         % Setting up the boundary conditions (Indices of the rows and columns to be deleted from K and F)
         boundaryNodeIndices = zeros(1,2*(nY + 1));        % 2D
     else
@@ -73,6 +84,7 @@ function f=FEMSolver(x)
         % Setting up the boundary conditions (Indices of the rows and columns to be deleted from K and F)
         boundaryNodeIndices = zeros(1,2*(nY + 1)*(nZ + 1)); % 3D
     end
+    
 %     F_reshaped = reshape(F',[],3);
 %     forceIndices = find(F ~= 0);
     
@@ -146,9 +158,9 @@ end
     end
 
     % Assembling the global stiffness matrix
-    K = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY,nZ);
+    [K,K0] = globalAssembly(E_i,Conn,k,dofPerNode,nX,nY,nZ);
     K = 0.5*(K + K');
-%     temp_s = k(:,:,1);
+%   temp_s = k(:,:,1);
     indices = 1:dofPerNode*nNodes;                  % Indices of all the nodes
     indices(boundaryNodeIndices) = [];
 
@@ -157,7 +169,8 @@ end
     K(:,boundaryNodeIndices) = [];                      % Columns
 
     F_calc = F;
-    F_calc(boundaryNodeIndices) = [];                   % Rows
+    F_calc(boundaryNodeIndices) = [];                   % Rows 
+   
     %F(:,boundaryNodeIndices) = [];                     % Columns
     
     
@@ -173,13 +186,67 @@ end
     %f=F'*u;
     f = F'*U;
     %viewMatrix(u);
+    
+    %gradf = zeros((nY*nX*nZ),1);
+    gradf = zeros(nY,nX,nZ);
+    
+    for t=1:nElem
+        [W,x_new]=density_grad(x(t),xphys,R);
+        for t1= 1:size(W)
+            %gradf(t) = -U'*(p*(xphys(t)^(p-1))*(E_0-E_min)*K0)*U;
+            gradf(t) = gradf(t) + ((-U'*(p*(x_new(t1)^(p-1))*(E_0-E_min)*K0)*U)*(W(t1)/sum(W)));
+        end
+    end
+    %gradf
 end
 
 % Non-linear constraints (volume fraction)
-function [c, ceq] = nonlcon(x)
+function [c, ceq, gradc, gradceq] = nonlcon(x)
         
         %c = sum((x'*v)) - volfrac*nX*nX;
-        c = sum(sum((dy*dx*dz)*(x))) - volfrac*length*breadth*height;
+        %c = sum(sum((dy*dx*dz)*(x))) - volfrac*length*breadth*height;
+        c = sum(x(:)) - volfrac*nElem;
+        gradc = ones(nElem,1);
         ceq = [];
+        gradceq = [];
 end
+
+    function xphys = density_filter(x,R)
+        xphys = zeros(size(x));        
+        for t=1:nElem
+            [i0,j0,k0] = ind2sub([nY,nX,nZ],t);
+            W = 0;
+            x_new = 0;
+            for i=1:nY
+                for j=1:nX
+                    for k=1:nZ
+                        dist = norm([i,j,k]-[i0,j0,k0]);
+                        if dist <=R
+                            W0 = R - dist;
+                            x_new= x_new + W0*x(i,j,k);
+                            W= W + W0;
+                        end
+                    end
+                end
+            end
+            xphys(t) = (x_new/W);
+        end
+    end
+
+    function [W,x_new]=density_grad(t0,xphys,R)               
+            [i0,j0,k0] = ind2sub([nY,nX,nZ],t0);          
+            W = [];
+            x_new = [];
+            for i=1:nY
+                for j=1:nX
+                    for k=1:nZ
+                        dist = norm([i,j,k]-[i0,j0,k0]);
+                        if dist <=R
+                            W =[W, R - dist];                            
+                            x_new = [x_new, xphys(i,j,k)];
+                        end
+                    end
+                end
+            end            
+    end       
 end
